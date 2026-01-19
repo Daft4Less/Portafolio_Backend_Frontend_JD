@@ -1,0 +1,203 @@
+.agendar-page {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 2rem;
+
+  .contenido {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: 1fr 1.5fr;
+    }
+  }
+
+  .perfil-programador {
+    text-align: center;
+    background-color: #f8f9fa;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+
+    .perfil-foto {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 4px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      color: #343a40;
+      margin-bottom: 0.5rem;
+    }
+
+    .perfil-rol {
+      font-size: 1.1rem;
+      color: #007bff;
+      font-weight: 500;
+    }
+  }
+
+  .horarios-disponibles {
+    background-color: #f8f9fa;
+    padding: 2rem;
+    border-radius: 12px;
+    
+    h3 {
+      font-size: 1.4rem;
+      color: #495057;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 0.5rem;
+    }
+
+    .lista-horarios {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+
+      .item-horario {
+        background-color: #ffffff;
+        padding: 0.8rem 1.2rem;
+        border-radius: 6px;
+        font-size: 1rem;
+        color: #333;
+        border: 1px solid #e9ecef;
+      }
+    }
+  }
+
+  .formulario-container {
+    background-color: #ffffff;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+
+    h3 {
+      text-align: center;
+      font-size: 1.6rem;
+      color: #343a40;
+      margin-bottom: 2rem;
+    }
+
+    .form-agendar {
+      .form-group {
+        margin-bottom: 1.5rem;
+
+        label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: #495057;
+        }
+
+        input, textarea, select { // Aplicar estilos también a los select
+          width: 100%;
+          padding: 0.8rem 1rem;
+          border: 1px solid #ced4da;
+          border-radius: 5px;
+          font-size: 1rem;
+          box-sizing: border-box;
+          // Estilos específicos para select
+          -webkit-appearance: none; // Remover estilo nativo en Webkit
+          -moz-appearance: none;    // Remover estilo nativo en Mozilla
+          appearance: none;         // Remover estilo nativo general
+          background-color: #fff;   // Asegurar fondo blanco
+          background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%00-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4s-5.6%208.3-5.6%2013c0%204.7%201.8%209.3%205.6%2013l128%20127.9c3.7%203.7%208.3%205.6%2012.9%205.6s9.3-1.8%2012.9-5.6l128-127.9c3.7-3.6%205.6-8.2%205.6-12.9%200-4.7-1.9-9.3-5.7-13z%22%2F%3E%3C%2Fsvg%3E'); // Flecha SVG azul
+          background-repeat: no-repeat;
+          background-position: right 0.7rem top 50%;
+          background-size: 0.65rem auto;
+          padding-right: 2.5rem; // Espacio extra para la flecha
+          
+          &:focus {
+            outline: none;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          }
+        }
+
+        .error-messages {
+          color: #e74c3c;
+          font-size: 0.875rem;
+          margin-top: 0.4rem;
+        }
+      }
+
+      .btn-submit {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:disabled {
+          background-color: #a0c9f1;
+          cursor: not-allowed;
+        }
+
+        &:not(:disabled):hover {
+          background-color: #0056b3;
+        }
+      }
+    }
+  }
+
+  .confirmacion {
+    text-align: center;
+    padding: 2rem;
+
+    .fa-check-circle {
+      font-size: 5rem;
+      color: #28a745;
+      margin-bottom: 1.5rem;
+    }
+
+    h3 {
+      font-size: 2rem;
+      color: #343a40;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #6c757d;
+      margin-bottom: 2rem;
+    }
+
+    .btn-nueva-solicitud {
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 1rem;
+    }
+
+    .link-volver {
+      font-size: 1rem;
+      color: #007bff;
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+  }
+
+  .mensaje-error {
+    text-align: center;
+    padding: 2rem;
+    background-color: #fbebed;
+    color: #c0392b;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+  }
+}

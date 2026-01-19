@@ -1,0 +1,79 @@
+<form [formGroup]="proyectoForm" (ngSubmit)="onSubmit()" class="proyecto-form">
+
+  <h3>{{ esModoEdicion ? 'Editar Proyecto' : 'Crear Nuevo Proyecto' }}</h3>
+
+  <div class="form-group">
+    <label for="name">Nombre del Proyecto</label>
+    <input id="name" type="text" formControlName="name" placeholder="Ej: Mi Portafolio con Angular">
+    <div *ngIf="proyectoForm.get('name')?.invalid && (proyectoForm.get('name')?.dirty || proyectoForm.get('name')?.touched)" class="error-messages">
+      <small *ngIf="proyectoForm.get('name')?.errors?.['required']">El nombre es requerido.</small>
+      <small *ngIf="proyectoForm.get('name')?.errors?.['minlength']">Debe tener al menos 3 caracteres.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="description">Descripción</label>
+    <textarea id="description" formControlName="description" rows="4" placeholder="Describe tu proyecto..."></textarea>
+    <div *ngIf="proyectoForm.get('description')?.invalid && (proyectoForm.get('description')?.dirty || proyectoForm.get('description')?.touched)" class="error-messages">
+      <small *ngIf="proyectoForm.get('description')?.errors?.['required']">La descripción es requerida.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="technologies">Tecnologías (separadas por comas)</label>
+    <input id="technologies" type="text" formControlName="technologies" placeholder="Ej: Angular, TypeScript, SCSS">
+    <div *ngIf="proyectoForm.get('technologies')?.invalid && (proyectoForm.get('technologies')?.dirty || proyectoForm.get('technologies')?.touched)" class="error-messages">
+      <small *ngIf="proyectoForm.get('technologies')?.errors?.['required']">Al menos una tecnología es requerida.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="repositoryLink">Enlace al Repositorio (opcional)</label>
+    <input id="repositoryLink" type="url" formControlName="repositoryLink" placeholder="https://github.com/usuario/repo">
+  </div>
+
+  <div class="form-group">
+    <label for="deploymentLink">Enlace a la Demo (opcional)</label>
+    <input id="deploymentLink" type="url" formControlName="deploymentLink" placeholder="https://mi-demo.com">
+  </div>
+
+  <div class="form-group">
+    <label for="section">Sección</label>
+    <select id="section" formControlName="section">
+      <option value="Proyectos Académicos">Proyectos Académicos</option>
+      <option value="Proyectos Laborales">Proyectos Laborales</option>
+    </select>
+    <div *ngIf="proyectoForm.get('section')?.invalid && (proyectoForm.get('section')?.dirty || proyectoForm.get('section')?.touched)" class="error-messages">
+      <small *ngIf="proyectoForm.get('section')?.errors?.['required']">La sección es requerida.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="participationType">Tipo de Participación</label>
+    <select id="participationType" formControlName="participationType">
+      <option value="Frontend">Frontend</option>
+      <option value="Backend">Backend</option>
+      <option value="Base de Datos">Base de Datos</option>
+      <option value="Fullstack">Fullstack</option>
+    </select>
+    <div *ngIf="proyectoForm.get('participationType')?.invalid && (proyectoForm.get('participationType')?.dirty || proyectoForm.get('participationType')?.touched)" class="error-messages">
+      <small *ngIf="proyectoForm.get('participationType')?.errors?.['required']">El tipo de participación es requerido.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="imagenUrl">URL de la Imagen (opcional)</label>
+    <input id="imagenUrl" type="url" formControlName="imagenUrl" placeholder="https://mi-imagen.com/foto.png">
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" [disabled]="proyectoForm.invalid" class="btn-submit">
+      {{ esModoEdicion ? 'Actualizar Proyecto' : 'Guardar Proyecto' }}
+    </button>
+    <button type="button" (click)="onCancelar()" class="btn-cancel">
+      Cancelar
+    </button>
+  </div>
+
+</form>
+
