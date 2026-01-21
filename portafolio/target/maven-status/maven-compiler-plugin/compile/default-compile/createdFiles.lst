@@ -1,0 +1,14 @@
+ec\edu\ups\ppw\portafolio\model\Horario.class
+ec\edu\ups\ppw\portafolio\services\UsuariosService.class
+ec\edu\ups\ppw\portafolio\dao\ProyectoDAO.class
+ec\edu\ups\ppw\portafolio\dao\UsuarioDAO.class
+ec\edu\ups\ppw\portafolio\business\Demo.class
+ec\edu\ups\ppw\portafolio\services\RestConfiguration.class
+ec\edu\ups\ppw\portafolio\dao\HorarioDAO.class
+ec\edu\ups\ppw\portafolio\model\Proyecto.class
+ec\edu\ups\ppw\portafolio\model\Asesoria.class
+ec\edu\ups\ppw\portafolio\model\Usuario.class
+ec\edu\ups\ppw\portafolio\model\Contacto.class
+ec\edu\ups\ppw\portafolio\services\Error.class
+ec\edu\ups\ppw\portafolio\business\GestionUsuarios.class
+ec\edu\ups\ppw\portafolio\dao\AsesoriaDAO.class
