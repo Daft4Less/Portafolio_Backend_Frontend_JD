@@ -1,0 +1,38 @@
+<h1>Prueba de Conexión a la API</h1>
+
+<div *ngIf="asesorias$ | async as asesorias; else loadingOrError">
+  <h2>Asesorías Obtenidas</h2>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Solicitante</th>
+        <th>Programador</th>
+        <th>Fecha</th>
+        <th>Comentario</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let asesoria of asesorias">
+        <td>{{ asesoria.id }}</td>
+        <td>{{ asesoria.solicitanteNombre }}</td>
+        <td>{{ asesoria.programador?.nombre || 'N/A' }}</td>
+        <td>{{ asesoria.fecha | date:'short' }}</td>
+        <td>{{ asesoria.comentario }}</td>
+        <td>{{ asesoria.estado }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<ng-template #loadingOrError>
+  <div *ngIf="error; else loading">
+    <h2>Error al cargar los datos</h2>
+    <p>Hubo un problema al intentar conectar con la API.</p>
+    <pre>{{ error | json }}</pre>
+  </div>
+  <ng-template #loading>
+    <p>Cargando datos...</p>
+  </ng-template>
+</ng-template>

@@ -11,6 +11,7 @@ import { AdmProgramadores } from './admin/adm-programadores/adm-programadores';
 import { AdmUsuarios } from './admin/adm-usuarios/adm-usuarios';
 import { AdmAsesorias } from './admin/adm-asesorias/adm-asesorias';
 import { AdmDashboard } from './admin/adm-dashboard/adm-dashboard'; // Keep import for potential direct navigation
+import { PruebaConexionComponent } from './publico/prueba-conexion/prueba-conexion'; // Import the new component
 
 // Guards
 import { AuthGuard } from './guards/auth.guard';
@@ -26,6 +27,7 @@ export const routes: Routes = [
     { path: 'ver-perfil/:id', component: VerPerfil },
     { path: 'agendar/:id', component: Agendar, canActivate: [AuthGuard] },
     { path: 'login', component: Login, canMatch: [NoAuthGuard] },
+    { path: 'prueba-conexion', component: PruebaConexionComponent }, // New route for the connection test
 
     // Programador Routes
     {
