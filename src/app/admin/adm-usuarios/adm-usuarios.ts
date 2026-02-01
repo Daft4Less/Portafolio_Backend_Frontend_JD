@@ -16,8 +16,8 @@ import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angula
 })
 export class AdmUsuarios implements OnInit {
 
-  allUsers$: Observable<UserProfile[]>; // Observable que emite todos los perfiles de usuario
-  normalUsers$: Observable<UserProfile[]>; // Observable que emite solo los perfiles de usuarios con rol 'Usuario normal'
+  allUsers$!: Observable<UserProfile[]>; // Observable que emite todos los perfiles de usuario
+  normalUsers$!: Observable<UserProfile[]>; // Observable que emite solo los perfiles de usuarios con rol 'Usuario normal'
 
   private selectedUserSubject = new BehaviorSubject<UserProfile | null>(null); // Subject para el usuario actualmente seleccionado
   selectedUser$ = this.selectedUserSubject.asObservable(); // Observable del usuario seleccionado
@@ -30,6 +30,22 @@ export class AdmUsuarios implements OnInit {
     private administradoresService: AdministradoresService, // Servicio para obtener y gestionar datos de usuarios
     private fb: FormBuilder // Servicio para construir formularios reactivos
   ) {
+    // La inicialización de datos se mueve a ngOnInit para asegurar que el componente esté listo.
+  }
+
+  //Inicializa el formulario reactivo y carga los datos de los usuarios.
+  ngOnInit() {
+    this.userForm = this.fb.group({
+      uid: ['', Validators.required], // UID del usuario, requerido
+      displayName: ['', Validators.required], // Nombre visible del usuario, requerido
+      email: [{ value: '', disabled: true }, Validators.required], // Correo electrónico, requerido y deshabilitado para edición
+    });
+
+    this.loadUsers(); // Carga inicial de los usuarios.
+  }
+
+  // Carga o recarga la lista de usuarios desde el servicio.
+  loadUsers(): void {
     // Inicializa el Observable que emite todos los perfiles de usuario.
     this.allUsers$ = this.administradoresService.getAllUsers();
 
@@ -37,15 +53,6 @@ export class AdmUsuarios implements OnInit {
     this.normalUsers$ = this.allUsers$.pipe(
       map(users => users.filter(user => user.role === 'Usuario normal'))
     );
-  }
-
-  //Inicializa el formulario reactivo userForm para la edición de perfiles de usuario.
-  ngOnInit() {
-    this.userForm = this.fb.group({
-      uid: ['', Validators.required], // UID del usuario, requerido
-      displayName: ['', Validators.required], // Nombre visible del usuario, requerido
-      email: [{ value: '', disabled: true }, Validators.required], // Correo electrónico, requerido y deshabilitado para edición
-    });
   }
 
   //Selecciona un usuario de la lista y carga sus datos en el formulario de edición.
@@ -76,9 +83,10 @@ export class AdmUsuarios implements OnInit {
       };
 
       try {
-        await this.administradoresService.updateUserProfile(uid, userData); // Actualiza el perfil del usuario en Firestore
+        await this.administradoresService.updateUserProfile(uid, userData); // Actualiza el perfil del usuario
         alert('Usuario actualizado exitosamente.');
         this.closeModal(); // Cierra el modal después de guardar
+        this.loadUsers(); // Recarga la lista de usuarios para reflejar los cambios
       } catch (error) {
         console.error('Error al actualizar usuario:', error);
         alert('Error al actualizar usuario.');
@@ -93,7 +101,8 @@ export class AdmUsuarios implements OnInit {
       try {
         await this.administradoresService.deleteUser(uid); // Llama al servicio para eliminar el usuario
         alert('Usuario eliminado exitosamente.');
-        this.closeModal(); // Cierra el modal después de la eliminación
+        this.closeModal(); // Cierra el modal si estuviera abierto
+        this.loadUsers(); // Recarga la lista de usuarios para reflejar la eliminación
       } catch (error) {
         console.error('Error al eliminar usuario:', error);
         alert('Error al eliminar usuario.');

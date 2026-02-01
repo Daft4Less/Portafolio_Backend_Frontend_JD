@@ -4,7 +4,7 @@ import { AdministradoresService } from '../../services/administradores.service';
 import { UserProfile } from '../../services/autenticacion.service';
 import { ProgrammerScheduleService } from '../../services/programmer-schedule.service';
 import { ProgrammerSchedule } from '../../models/programmer-schedule.model';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 
@@ -86,19 +86,28 @@ export class AdmAsesorias implements OnInit {
     });
   }
 
-  //SELECCIONA() un programador de la lista y lo establece como el programador actual para gestionar sus horarios.
-  selectProgrammer(programmer: UserProfile): void {
-    // Asegura que 'schedules' sea un array, incluso si está vacío o indefinido
-    const programmerWithSchedules = { ...programmer, schedules: programmer.schedules || [] };
+  //SELECCIONA() un programador, obtiene sus horarios y muestra el modal.
+  async selectProgrammer(programmer: UserProfile): Promise<void> {
+    try {
+      // Llama al servicio para obtener los horarios específicos de este programador
+      const schedules = await firstValueFrom(this.programmerScheduleService.getSchedules(programmer.uid));
 
-    // Ordena los horarios por día de la semana para una mejor visualización
-    if (programmerWithSchedules.schedules) {
-      programmerWithSchedules.schedules.sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+      // Combina el objeto programador con los horarios recién obtenidos
+      const programmerWithSchedules = { ...programmer, schedules: schedules || [] };
+
+      // Ordena los horarios por día de la semana para una mejor visualización
+      if (programmerWithSchedules.schedules) {
+        programmerWithSchedules.schedules.sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+      }
+
+      // Emite el programador con sus horarios para actualizar la vista del modal
+      this.selectedProgrammerSubject.next(programmerWithSchedules);
+      this.cancelScheduleEdit();
+      this.showModal = true;
+    } catch (error) {
+      console.error('Error al obtener los horarios del programador:', error);
+      alert('No se pudieron cargar los horarios para este programador.');
     }
-
-    this.selectedProgrammerSubject.next(programmerWithSchedules); // Emite el programador seleccionado
-    this.cancelScheduleEdit(); // Cancela cualquier edición de horario previa
-    this.showModal = true; // Abre el modal de gestión de horarios
   }
 
 
@@ -141,7 +150,12 @@ export class AdmAsesorias implements OnInit {
     }
 
     const formValue = this.scheduleForm.getRawValue();
-    const { id, startTime, endTime, isAvailable, startDateOffService, endDateOffService } = formValue;
+    // Extraer 'isAvailable' directamente para depuración y uso
+    const isAvailable = this.scheduleForm.get('isAvailable')?.value;
+    const { id, startTime, endTime, startDateOffService, endDateOffService } = formValue;
+
+    // --- PASO DE DEPURACIÓN ---
+    console.log("Valor de 'isAvailable' leído del formulario:", isAvailable);
 
     // Nueva validación: si no está disponible, la fecha de inicio no puede ser posterior a la de fin
     if (!isAvailable && new Date(startDateOffService) > new Date(endDateOffService)) {
@@ -151,19 +165,27 @@ export class AdmAsesorias implements OnInit {
 
     try {
       if (id) { // Modo Edición: si el formulario tiene un ID, se actualiza un horario existente
+        const originalSchedule = this.selectedScheduleSubject.getValue();
+        if (!originalSchedule) {
+          alert('Error: No se encontró el horario original a editar.');
+          return;
+        }
+
         const scheduleToUpdate = { 
+          dayOfWeek: originalSchedule.dayOfWeek, // <-- CORRECCIÓN: Incluir el día de la semana original
           startTime, 
           endTime, 
           isAvailable,
-          // Si no está disponible, envía las fechas. Si está disponible, envía null.
           startDateOffService: !isAvailable ? startDateOffService : null,
           endDateOffService: !isAvailable ? endDateOffService : null
         };
-        await this.programmerScheduleService.updateSchedule(programmer.uid, id, scheduleToUpdate);
         
-        // Actualiza los datos locales del programador seleccionado para reflejar el cambio en la UI
+        // Llamar al servicio y capturar la respuesta actualizada del servidor
+        const updatedScheduleFromServer = await this.programmerScheduleService.updateSchedule(programmer.uid, id, scheduleToUpdate);
+        
+        // Actualiza la lista local usando la respuesta autoritativa del servidor
         const updatedSchedules = programmer.schedules?.map(s => 
-          s.id === id ? { ...s, ...scheduleToUpdate } : s
+          s.id === id ? updatedScheduleFromServer : s
         ) || [];
         this.selectedProgrammerSubject.next({ ...programmer, schedules: updatedSchedules });
         
@@ -180,23 +202,29 @@ export class AdmAsesorias implements OnInit {
           return;
         }
 
+        // Prepara una copia local de los horarios para actualizarla
+        const updatedSchedules = [...(programmer.schedules || [])];
+
         // Añade un nuevo horario por cada día seleccionado
         for (const day of selectedDays) {
           const newSchedule: Omit<ProgrammerSchedule, 'id'> = {
             dayOfWeek: day,
             startTime,
             endTime,
-            isAvailable,
-            // Si no está disponible, envía las fechas. Si está disponible, envía null.
+            isAvailable, // Usar el valor explícitamente obtenido
             startDateOffService: !isAvailable ? startDateOffService : null,
             endDateOffService: !isAvailable ? endDateOffService : null
           };
-          await this.programmerScheduleService.addSchedule(programmer.uid, newSchedule);
+          // Captura el horario creado que devuelve el servicio (ya con su ID)
+          const createdSchedule = await this.programmerScheduleService.addSchedule(programmer.uid, newSchedule);
+          updatedSchedules.push(createdSchedule);
         }
 
-        // Vuelve a obtener el programador para refrescar los ID de los nuevos horarios añadidos
-        const updatedProgrammer = await this.administradoresService.getUser(programmer.uid);
-        this.selectedProgrammerSubject.next(updatedProgrammer);
+        // Ordena la lista de horarios actualizada
+        updatedSchedules.sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+
+        // Actualiza el programador seleccionado con su nueva lista de horarios
+        this.selectedProgrammerSubject.next({ ...programmer, schedules: updatedSchedules });
 
         alert('Horario(s) agregado(s) exitosamente.');
       }

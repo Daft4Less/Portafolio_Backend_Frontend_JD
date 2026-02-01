@@ -84,7 +84,13 @@ export class Proyectos implements OnInit, OnDestroy {
   }
 
   //Eliminación de un proyecto.
-  async onEliminarProyecto(idProyecto: string): Promise<void> {
+  async onEliminarProyecto(idProyecto: string | undefined): Promise<void> {
+    // Comprobación de seguridad para asegurar que el ID no es undefined
+    if (!idProyecto) {
+      console.error('Intento de eliminar un proyecto con ID indefinido.');
+      return;
+    }
+
     try {
       await this.proyectosService.deleteProyecto(idProyecto); // Elimina el proyecto de la base de datos
       this.cargarProyectos(); // Recarga la lista de proyectos para reflejar los cambios
