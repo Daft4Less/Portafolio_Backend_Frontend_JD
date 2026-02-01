@@ -155,9 +155,9 @@ export class AdmAsesorias implements OnInit {
           startTime, 
           endTime, 
           isAvailable,
-          // Añadir las fechas de no disponibilidad si el horario no está disponible
-          startDateOffService: !isAvailable ? startDateOffService : '',
-          endDateOffService: !isAvailable ? endDateOffService : ''
+          // Si no está disponible, envía las fechas. Si está disponible, envía null.
+          startDateOffService: !isAvailable ? startDateOffService : null,
+          endDateOffService: !isAvailable ? endDateOffService : null
         };
         await this.programmerScheduleService.updateSchedule(programmer.uid, id, scheduleToUpdate);
         
@@ -187,9 +187,9 @@ export class AdmAsesorias implements OnInit {
             startTime,
             endTime,
             isAvailable,
-            // Añadir las fechas de no disponibilidad si el horario no está disponible
-            startDateOffService: !isAvailable ? startDateOffService : '',
-            endDateOffService: !isAvailable ? endDateOffService : ''
+            // Si no está disponible, envía las fechas. Si está disponible, envía null.
+            startDateOffService: !isAvailable ? startDateOffService : null,
+            endDateOffService: !isAvailable ? endDateOffService : null
           };
           await this.programmerScheduleService.addSchedule(programmer.uid, newSchedule);
         }
