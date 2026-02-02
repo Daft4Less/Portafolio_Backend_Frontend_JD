@@ -100,6 +100,7 @@ public class UsuariosService {
 
     @DELETE
     @Path("{id}")
+    @Produces("application/json")
     public Response eliminarUsuario(@PathParam("id") String id) {
         try {
             gu.eliminarUsuario(id);

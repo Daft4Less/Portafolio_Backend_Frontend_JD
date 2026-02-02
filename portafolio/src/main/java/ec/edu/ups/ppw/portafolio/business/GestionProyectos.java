@@ -8,6 +8,8 @@ import ec.edu.ups.ppw.portafolio.model.Usuario;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 
+import java.util.UUID;
+
 @Stateless
 public class GestionProyectos {
 
@@ -17,19 +19,25 @@ public class GestionProyectos {
     @Inject
     private UsuarioDAO daoUsuario;
 
-    public void guardarProyectos(Proyecto proyecto, String usuarioId) throws Exception {
+    public Proyecto guardarProyectos(Proyecto proyecto, String usuarioId) throws Exception {
         Usuario u = daoUsuario.read(usuarioId);
         if (u == null) {
             throw new Exception("Usuario no encontrado");
         }
         proyecto.setUsuario(u);
-        
-        Proyecto p = daoProyecto.read(proyecto.getId());
-        if (p == null) {
+
+        if (proyecto.getId() == null || proyecto.getId().isEmpty()) {
+            proyecto.setId(UUID.randomUUID().toString());
             daoProyecto.insert(proyecto);
         } else {
-            daoProyecto.update(proyecto);
+            Proyecto p = daoProyecto.read(proyecto.getId());
+            if (p == null) {
+                daoProyecto.insert(proyecto);
+            } else {
+                daoProyecto.update(proyecto);
+            }
         }
+        return proyecto;
     }
 
     public List<Proyecto> getProyectos() {

@@ -23,7 +23,6 @@ public class Asesoria implements Serializable {
     // Relación 1: Quien pide la cita
     @ManyToOne
     @JoinColumn(name = "solicitante_uid", nullable = false)
-    @JsonbTransient
     private Usuario solicitante;
 
     // Guardamos el nombre del solicitante 
@@ -33,7 +32,6 @@ public class Asesoria implements Serializable {
     // Relación 2: El programador experto
     @ManyToOne
     @JoinColumn(name = "programador_uid", nullable = false)
-    @JsonbTransient
     private Usuario programador;
 
     @Column(name = "ase_fecha", nullable = false)

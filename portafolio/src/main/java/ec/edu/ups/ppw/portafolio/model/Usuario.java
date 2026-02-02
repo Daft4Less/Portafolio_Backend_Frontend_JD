@@ -134,7 +134,6 @@ public class Usuario implements Serializable {
         this.descripcion = descripcion;
     }
 
-    @JsonbTransient
     public Contacto getContacto() {
         return contacto;
     }

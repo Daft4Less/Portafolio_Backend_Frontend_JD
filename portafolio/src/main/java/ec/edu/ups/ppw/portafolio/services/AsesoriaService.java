@@ -59,6 +59,7 @@ public class AsesoriaService {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response crearAsesoria(Asesoria asesoria, @QueryParam("solicitanteId") String solicitanteId, @QueryParam("programadorId") String programadorId, @Context UriInfo uriInfo) {
         try {
             if (solicitanteId == null || solicitanteId.isEmpty() || programadorId == null || programadorId.isEmpty()) {
@@ -97,6 +98,7 @@ public class AsesoriaService {
 
     @DELETE
     @Path("{id}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response eliminarAsesoria(@PathParam("id") String id) {
         try {
             ga.eliminarAsesoria(id);

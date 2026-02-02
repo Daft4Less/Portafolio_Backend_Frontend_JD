@@ -56,6 +56,7 @@ public class HorarioService {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response crearHorario(Horario horario, @QueryParam("usuarioId") String usuarioId, @Context UriInfo uriInfo) {
         try {
             if (usuarioId == null || usuarioId.isEmpty()) {
@@ -94,6 +95,7 @@ public class HorarioService {
 
     @DELETE
     @Path("{id}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response eliminarHorario(@PathParam("id") String id) {
         try {
             gh.eliminarHorario(id);

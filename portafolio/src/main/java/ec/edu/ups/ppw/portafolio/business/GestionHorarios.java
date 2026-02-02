@@ -25,8 +25,8 @@ public class GestionHorarios {
         }
         horario.setUsuario(u); // Asocia el horario al programador
         
-        Horario h = daoHorario.read(horario.getId());
-        if (h == null) {
+        if (horario.getId() == null || horario.getId().isEmpty()) {
+            horario.setId(java.util.UUID.randomUUID().toString());
             daoHorario.insert(horario);
         } else {
             daoHorario.update(horario);

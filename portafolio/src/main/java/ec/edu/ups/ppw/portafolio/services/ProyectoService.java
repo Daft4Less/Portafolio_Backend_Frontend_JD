@@ -56,6 +56,7 @@ public class ProyectoService {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response crearProyecto(Proyecto proyecto, @QueryParam("usuarioId") String usuarioId, @Context UriInfo uriInfo) {
         try {
             if (usuarioId == null || usuarioId.isEmpty()) {
@@ -63,9 +64,9 @@ public class ProyectoService {
                         .entity(new Error(400, "Petición incorrecta", "El 'usuarioId' es requerido para crear un proyecto."))
                         .build();
             }
-            gp.guardarProyectos(proyecto, usuarioId);
-            URI location = uriInfo.getAbsolutePathBuilder().path(proyecto.getId()).build();
-            return Response.created(location).entity(proyecto).build();
+            Proyecto proyectoGuardado = gp.guardarProyectos(proyecto, usuarioId);
+            URI location = uriInfo.getAbsolutePathBuilder().path(proyectoGuardado.getId()).build();
+            return Response.created(location).entity(proyectoGuardado).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new Error(500, "Error interno", e.getMessage()))
@@ -83,8 +84,8 @@ public class ProyectoService {
                         .entity(new Error(400, "Petición incorrecta", "El 'usuarioId' es requerido para actualizar un proyecto."))
                         .build();
             }
-            gp.guardarProyectos(proyecto, usuarioId);
-            return Response.ok(proyecto).build();
+            Proyecto proyectoGuardado = gp.guardarProyectos(proyecto, usuarioId);
+            return Response.ok(proyectoGuardado).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new Error(500, "Error interno", e.getMessage()))
@@ -94,6 +95,7 @@ public class ProyectoService {
 
     @DELETE
     @Path("{id}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response eliminarProyecto(@PathParam("id") String id) {
         try {
             gp.eliminarProyecto(id);
