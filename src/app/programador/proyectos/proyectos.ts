@@ -56,9 +56,9 @@ export class Proyectos implements OnInit, OnDestroy {
 
   //Responde a la acción de cancelar el formulario
   onCancelarFormulario(): void {
-    this.mostrarFormulario = false; // Oculta el formulario
-    this.proyectoAEditar = undefined; // Borra el proyecto en edición
-  }
+          this.proyectoAEditar = undefined; // Borra el proyecto en edición
+          this.mostrarFormulario = false; // Oculta el formulario
+          console.log('Formulario cerrado. mostrarFormulario establecido a:', this.mostrarFormulario);  }
 
   // Maneja el evento cuando un proyecto ha sido guardado (ya sea nuevo o editado)
   // Determina si se debe añadir un nuevo proyecto o actualizar uno existente
@@ -70,13 +70,12 @@ export class Proyectos implements OnInit, OnDestroy {
       if (this.proyectoAEditar && this.proyectoAEditar.id) {
         await this.proyectosService.updateProyecto(this.proyectoAEditar.id, proyecto);
       } else {
-        // Si no hay proyecto en edición o no tiene ID, es un nuevo proyecto
-        const projectData: Omit<Project, 'id'> = proyecto;
-        await this.proyectosService.addProyecto(projectData);
+        // Si no hay proyecto en edición o no tiene ID, es un nuevo proyecto.
+        // Se espera que el servicio (y el backend) devuelva el proyecto recién creado con su ID.
+        const nuevoProyecto = await this.proyectosService.addProyecto(proyecto);
+        // Se añade el nuevo proyecto directamente al array local para una actualización optimista.
+        this.proyectos.push(nuevoProyecto);
       }
-      this.mostrarFormulario = false; // Oculta el formulario
-      this.proyectoAEditar = undefined; // Borra el proyecto en edición
-      this.cargarProyectos(); // Recarga la lista de proyectos para reflejar los cambios
     } catch (error) {
       console.error('Error al guardar el proyecto:', error);
       // Aquí se podría integrar un servicio de notificación para mostrar errores al usuario

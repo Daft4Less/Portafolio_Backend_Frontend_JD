@@ -26,19 +26,18 @@ export class AsesoriasService {
       throw new Error('Debes iniciar sesión para solicitar una asesoría.');
     }
 
-    // Convertir fecha y hora a formato ISO 8601 para el backend (LocalDateTime)
-    const fechaHoraISO = new Date(`${solicitud.fecha}T${solicitud.hora}:00`).toISOString(); // Añadimos :00 para segundos
+    // Convertir fecha y hora a formato que el backend espera (YYYY-MM-DDTHH:MM:SS)
+    const fechaHoraISO = `${solicitud.fecha}T${solicitud.hora}:00`; // Sin .toISOString() para evitar la 'Z'
 
-    const nuevaAsesoria: Asesoria = {
-      // id será asignado por el backend
-      programador: { uid: solicitud.programadorId } as any, // Solo necesitamos el UID para la relación
+    const nuevaAsesoria: Partial<Asesoria> = {
+      id: crypto.randomUUID(), // Generar un ID único en el frontend.
       fecha: fechaHoraISO,
       comentario: solicitud.comentario,
-      solicitante: { uid: user.uid } as any, // Solo necesitamos el UID para la relación
       solicitanteNombre: user.displayName!,
       estado: 'pendiente'
     };
 
+    // Los IDs se envían como QueryParams, como requiere el backend para la validación.
     const params = new HttpParams()
       .set('solicitanteId', user.uid)
       .set('programadorId', solicitud.programadorId);

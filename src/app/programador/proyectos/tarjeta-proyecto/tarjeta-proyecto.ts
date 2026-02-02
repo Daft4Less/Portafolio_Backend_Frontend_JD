@@ -20,9 +20,13 @@ export class TarjetaProyecto {
 
   // Maneja la acción de eliminar el proyecto
   onEliminar(): void {
+    console.log('onEliminar() triggered for project:', this.proyecto);
     // Asegurarse de que el proyecto y su ID existen antes de emitir el evento
     if (this.proyecto?.id) {
+      console.log('Emitting eliminarProyecto event with ID:', this.proyecto.id);
       this.eliminarProyecto.emit(this.proyecto.id);
+    } else {
+      console.log('Cannot emit eliminarProyecto: project or project.id is undefined or null.');
     }
   }
 
