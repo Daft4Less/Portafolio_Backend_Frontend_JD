@@ -16,6 +16,9 @@ public class GestionAsesorias {
     
     @Inject
     private UsuarioDAO daoUsuario;
+    
+    @Inject
+    private NotificationClient notificationClient;
 
     public void guardarAsesoria(Asesoria asesoria, String solicitanteId, String programadorId) throws Exception {
         Usuario solicitante = daoUsuario.read(solicitanteId);
@@ -38,8 +41,10 @@ public class GestionAsesorias {
         		asesoria.setEstado("pendiente"); // Estado por defecto al crear
         	}
             daoAsesoria.insert(asesoria);
+            notificationClient.notificarNuevaAsesoria(asesoria);
         } else {
             daoAsesoria.update(asesoria);
+            notificationClient.notificarActualizacionEstado(asesoria);
         }
     }
 
