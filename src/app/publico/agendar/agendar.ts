@@ -74,7 +74,9 @@ export class Agendar implements OnInit, OnDestroy {
         const programadorId = params.get('id');
         if (programadorId) {
           // Obtiene el perfil del programador y sus horarios de forma concurrente
-          const programadorProfile$ = this.programadoresService.getProgramadorProfile(programadorId);
+          const programadorProfile$ = this.programadoresService.getProgramadorById(programadorId).pipe(
+            map(perfil => perfil ? perfil as UserProfile : null) // Cast PerfilProgramador to UserProfile
+          );
           const programmerSchedules$ = this.programmerScheduleService.getSchedules(programadorId);
 
           // Combina los resultados de ambos Observables
@@ -275,13 +277,24 @@ export class Agendar implements OnInit, OnDestroy {
     }
 
     this.errorEnvio = ''; 
-    const solicitud = {
-      programadorId: this.programador.uid, // Asigna el ID del programador a la solicitud
-      ...this.agendamientoForm.value // Añade los valores del formulario a la solicitud
+
+    if (!this.programador || !this.programador.uid) {
+      this.errorEnvio = 'Programador no disponible. No se puede enviar la solicitud.';
+      console.error(this.errorEnvio);
+      return;
+    }
+
+    const formValue = this.agendamientoForm.value;
+
+    const solicitudAsesoria = {
+      programadorId: this.programador.uid,
+      fecha: formValue.fecha, // 'YYYY-MM-DD'
+      hora: formValue.hora.split('-')[0], // 'HH:MM'
+      comentario: formValue.comentario,
     };
 
     try {
-      await this.asesoriasService.addSolicitudAsesoria(solicitud); // Envía la solicitud de asesoría
+      await this.asesoriasService.addSolicitudAsesoria(solicitudAsesoria); // Envía la solicitud de asesoría
       this.solicitudEnviada = true; // Actualiza el estado de envío de la solicitud
       this.notificationService.show('Solicitud enviada. Serás notificado cuando sea revisada.', 'success'); // Muestra notificación de éxito
       

@@ -1,45 +1,39 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Auth, GoogleAuthProvider, signInWithPopup, authState, User } from '@angular/fire/auth';
+import { Observable, from, of, catchError, map, switchMap, firstValueFrom } from 'rxjs';
 
-import { Injectable, Injector, runInInjectionContext } from '@angular/core';
-import { Auth, GoogleAuthProvider, signInWithPopup, authState } from '@angular/fire/auth';
-import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
-import { Observable, from, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 import { ProgrammerSchedule } from '../models/programmer-schedule.model';
 import { Project } from '../models/portfolio.model';
 
-
-//Definicion de la estructura de un perfil de usuario
+// Definicion de la estructura de un perfil de usuario (matches backend Usuario.java)
 export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
   photoURL: string;
   role: 'Administrador' | 'Programador' | 'Usuario normal';
-  
   especialidad?: string;
   descripcion?: string;
-  contacto?: any; 
-  schedules?: ProgrammerSchedule[];
-  projects?: Project[];
+  contacto?: any; // Assuming 'Contacto' is a simple object
+  schedules?: ProgrammerSchedule[]; // These are likely not part of the base UserProfile anymore, but keeping for compatibility if needed elsewhere.
+  projects?: Project[]; // Same as above.
 }
 
-// Servicio encargado de la autenticación de usuarios y la gestión de sus perfiles usando Firebase Authentication: Google Sign-In y Firestore.
+// Servicio encargado de la autenticación y gestión de perfiles de usuario
 @Injectable({
   providedIn: 'root'
 })
 export class AutenticacionService {
+  private apiUrl = `${environment.apiUrl}/usuarios`;
 
   constructor(
-    private auth: Auth, 
-    private firestore: Firestore, 
-    private injector: Injector 
+    private auth: Auth,
+    private http: HttpClient
   ) {}
 
-  
-
-  // REGISTRAR() un nuevo usuario usando la autenticación de Google.
-  // Si existe en FS, se desconecta y lanza error.
-  // Si no, crea perfil con rol 'Usuario normal' en FS.
+  // REGISTRAR(): Autentica con Google y luego registra el usuario en nuestro backend.
   async registerWithGoogle(): Promise<UserProfile> {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
@@ -47,31 +41,38 @@ export class AutenticacionService {
     const credential = await signInWithPopup(this.auth, provider);
     const user = credential.user;
 
-    const userRef = doc(this.firestore, `users/${user.uid}`);
-    const docSnap = await getDoc(userRef);
+    // Primero, verificamos si el usuario ya existe en nuestro backend.
+    const userExists = await firstValueFrom(
+      this.http.get<UserProfile>(`${this.apiUrl}/${user.uid}`).pipe(
+        map(() => true), // Si obtenemos una respuesta, el usuario existe
+        catchError(error => {
+          if (error.status === 404) {
+            return of(false); // 404 Not Found significa que el usuario no existe (lo cual es bueno para registrar)
+          }
+          throw error; // Lanza otros errores
+        })
+      )
+    );
 
-    if (docSnap.exists()) {
-      // Si el usuario ya tiene un documento en FS, indica que ya está registrado.
+    if (userExists) {
       await this.auth.signOut();
       throw new Error('AUTH/USER-ALREADY-EXISTS');
-    } else {
-      // Crea un nuevo perfil de usuario en FS si no existe.
-      const newUserProfile: UserProfile = {
-        uid: user.uid,
-        email: user.email!,
-        displayName: user.displayName!,
-        photoURL: user.photoURL!,
-        role: 'Usuario normal' 
-      };
-      await setDoc(userRef, newUserProfile);
-      return newUserProfile;
     }
+
+    // Si no existe, creamos el perfil en nuestro backend.
+    const newUserProfile: UserProfile = {
+      uid: user.uid,
+      email: user.email!,
+      displayName: user.displayName!,
+      photoURL: user.photoURL!,
+      role: 'Usuario normal'
+    };
+
+    // Usamos POST para crear el nuevo usuario en el backend
+    return firstValueFrom(this.http.post<UserProfile>(this.apiUrl, newUserProfile));
   }
 
-
-
-  // INICIAR SESIÓN() a un usuario existente usando Google Sign-In.
-  //Si no tiene perfil en FS, se desconecta y lanza error.
+  // INICIAR SESIÓN(): Autentica con Google y obtiene el perfil de nuestro backend.
   async signInWithGoogle(): Promise<UserProfile> {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
@@ -79,41 +80,43 @@ export class AutenticacionService {
     const credential = await signInWithPopup(this.auth, provider);
     const user = credential.user;
 
-    const userRef = doc(this.firestore, `users/${user.uid}`);
-    const docSnap = await getDoc(userRef);
-
-    if (docSnap.exists()) {
-      // Si el usuario tiene un documento en FB, devuelve su perfil.
-      return docSnap.data() as UserProfile;
-    } else {
-      // Caso contrario indica que no está registrado.
-      await this.auth.signOut();
-      throw new Error('AUTH/USER-NOT-FOUND');
-    }
+    // Hacemos GET a nuestro backend para obtener el perfil del usuario.
+    return await firstValueFrom(
+      this.http.get<UserProfile>(`${this.apiUrl}/${user.uid}`).pipe(
+        catchError(async (error) => {
+          if (error.status === 404) {
+            // Si no se encuentra en nuestro backend, cerramos sesión y lanzamos error.
+            await this.auth.signOut();
+            throw new Error('AUTH/USER-NOT-FOUND');
+          }
+          throw error; // Lanza otros errores
+        })
+      )
+    );
   }
 
-
-  // Obtiene el perfil del usuario actualmente autenticado.
+  // Obtiene el perfil de nuestro backend para el usuario actualmente autenticado en Firebase.
   getUsuarioActual(): Observable<UserProfile | null> {
     return authState(this.auth).pipe(
-      switchMap(user => {
+      switchMap((user: User | null) => {
         if (user) {
-          return runInInjectionContext(this.injector, () =>
-            from(getDoc(doc(this.firestore, `users/${user.uid}`))).pipe(
-              map(docSnap => {
-                return docSnap.exists() ? (docSnap.data() as UserProfile) : null;
-              })
-            )
+          // Si hay un usuario de Firebase, obtenemos su perfil de nuestro backend
+          return this.http.get<UserProfile>(`${this.apiUrl}/${user.uid}`).pipe(
+            catchError(() => {
+              // Si hay un error (ej. 404), el perfil no existe en el backend.
+              // Devolvemos null para indicar que el usuario no está completamente configurado.
+              return of(null);
+            })
           );
         } else {
+          // Si no hay usuario de Firebase, no hay usuario actual.
           return of(null);
         }
       })
     );
   }
 
-  
-  //Cierra sesion del usuario actual.
+  // Cierra la sesión del cliente de Firebase Auth.
   logout(): Promise<void> {
     return this.auth.signOut();
   }

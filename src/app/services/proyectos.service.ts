@@ -1,92 +1,71 @@
 import { Injectable } from '@angular/core';
-import { Firestore, doc, updateDoc, getDoc, docSnapshots, DocumentReference } from '@angular/fire/firestore';
-import { Observable, of, map, switchMap, firstValueFrom } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, switchMap, firstValueFrom } from 'rxjs';
 import { Project } from '../models/portfolio.model';
-import { AutenticacionService, UserProfile } from './autenticacion.service';
+import { AutenticacionService } from './autenticacion.service';
+import { environment } from '../../environments/environment';
 
-
-//Gestion de proyectos de los programadores 
 @Injectable({
   providedIn: 'root'
 })
 export class ProyectosService {
 
+  private apiUrl = `${environment.apiUrl}/proyectos`;
+
   constructor(
-    private firestore: Firestore, 
-    private authService: AutenticacionService 
+    private http: HttpClient,
+    private authService: AutenticacionService
   ) {}
 
-
-  //OBTENER() el id para ver si es un programador desde FS
-  private getUserDocRef(): Observable<DocumentReference<UserProfile> | null> {
-    const user = this.authService.getUsuarioActual();
-    return user.pipe(
-      map(u => u ? doc(this.firestore, `users/${u.uid}`) as DocumentReference<UserProfile> : null)
-    );
-  }
-
-
-  //OBTENER() los proyectos del programador 
+  // OBTIENE los proyectos del usuario actualmente autenticado.
   getProyectos(): Observable<Project[]> {
-    return this.getUserDocRef().pipe(
-      switchMap(userDocRef => {
-        if (!userDocRef) return of([]); // Si no hay referencia al documento de usuario, devuelve un array vacío
-        return docSnapshots<UserProfile>(userDocRef).pipe(
-          map(docSnap => docSnap.data()?.projects || []) // Extrae el array de proyectos o devuelve uno vacío
-        );
+    return this.authService.getUsuarioActual().pipe(
+      switchMap(user => {
+        if (!user) {
+          return of([]); // Si no hay usuario, no hay proyectos.
+        }
+        const params = new HttpParams().set('usuarioId', user.uid);
+        return this.http.get<Project[]>(this.apiUrl, { params });
       })
     );
   }
 
-
-  // AGREGARPROYECTO() al array de los proyectos del programador 
-  async addProyecto(project: Omit<Project, 'id'>): Promise<void> {
-    const userDocRef = await firstValueFrom(this.getUserDocRef());
-    if (!userDocRef) throw new Error('Usuario no autenticado.'); // Asegura que el usuario esté autenticado
-
-    const docSnap = await getDoc(userDocRef);
-    const existingProjects = docSnap.data()?.projects || []; // Obtiene proyectos existentes o un array vacío
-    
-    const newProject: Project = {
-      ...project,
-      id: new Date().getTime().toString() // Genera un ID único simple basado en el tiempo
-    };
-
-    const updatedProjects = [...existingProjects, newProject]; // Añade el nuevo proyecto al array
-    return updateDoc(userDocRef, { projects: updatedProjects }); // Actualiza el documento del usuario en Firestore
+  // OBTIENE los proyectos de un usuario específico por su ID.
+  getProyectosPorUsuario(usuarioId: string): Observable<Project[]> {
+    if (!usuarioId) {
+      return of([]);
+    }
+    const params = new HttpParams().set('usuarioId', usuarioId);
+    return this.http.get<Project[]>(this.apiUrl, { params });
   }
 
+  // AGREGA un nuevo proyecto para el usuario autenticado.
+  async addProyecto(project: Omit<Project, 'id'>): Promise<Project> {
+    const user = await firstValueFrom(this.authService.getUsuarioActual());
+    if (!user) {
+      throw new Error('Usuario no autenticado para agregar proyecto.');
+    }
 
-  // ACTUALIZA() proyectp existente en el array de proyectos del programador 
-  async updateProyecto(projectId: string, datosActualizados: Partial<Project>): Promise<void> {
-    const userDocRef = await firstValueFrom(this.getUserDocRef());
-    if (!userDocRef) throw new Error('Usuario no autenticado.'); // Asegura que el usuario esté autenticado
-
-    const docSnap = await getDoc(userDocRef);
-    const existingProjects = docSnap.data()?.projects || []; // Obtiene proyectos existentes
-    
-    // Mapea y actualiza el proyecto correspondiente, asegurando que el ID no se cambie accidentalmente
-    const updatedProjects = existingProjects.map(p => {
-      if (p.id === projectId) {
-        return { ...p, ...datosActualizados, id: p.id }; // Fusiona los cambios manteniendo el ID original
-      }
-      return p;
-    });
-
-    return updateDoc(userDocRef, { projects: updatedProjects }); // Actualiza el documento del usuario en Firestore
+    const params = new HttpParams().set('usuarioId', user.uid);
+    // El backend genera el ID, por lo que lo recibimos en la respuesta.
+    return firstValueFrom(this.http.post<Project>(this.apiUrl, project, { params }));
   }
-  
-  // EMILINA() proyecto especifico del array de proyectos del programador 
+
+  // ACTUALIZA un proyecto existente para el usuario autenticado.
+  async updateProyecto(projectId: string, datosActualizados: Partial<Project>): Promise<Project> {
+    const user = await firstValueFrom(this.authService.getUsuarioActual());
+    if (!user) {
+      throw new Error('Usuario no autenticado para actualizar proyecto.');
+    }
+
+    const projectToUpdate = { ...datosActualizados, id: projectId };
+    const params = new HttpParams().set('usuarioId', user.uid);
+    return firstValueFrom(this.http.put<Project>(this.apiUrl, projectToUpdate, { params }));
+  }
+
+  // ELIMINA un proyecto por su ID.
   async deleteProyecto(projectId: string): Promise<void> {
-    const userDocRef = await firstValueFrom(this.getUserDocRef());
-    if (!userDocRef) throw new Error('Usuario no autenticado.'); // Asegura que el usuario esté autenticado
-
-    const docSnap = await getDoc(userDocRef);
-    const existingProjects = docSnap.data()?.projects || []; // Obtiene proyectos existentes
-    
-    // Filtra el array de proyectos para eliminar la entrada con el ID coincidente
-    const updatedProjects = existingProjects.filter(p => p.id !== projectId);
-    
-    return updateDoc(userDocRef, { projects: updatedProjects }); // Actualiza el documento del usuario en Firestore
+    // La eliminación no requiere el usuarioId según la API, solo el ID del proyecto.
+    await firstValueFrom(this.http.delete<void>(`${this.apiUrl}/${projectId}`));
   }
 }

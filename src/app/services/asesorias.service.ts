@@ -1,109 +1,118 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, collectionData, doc, getDoc, setDoc, updateDoc, deleteDoc, CollectionReference, query, where, Timestamp } from '@angular/fire/firestore';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, firstValueFrom } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, catchError } from 'rxjs/operators';
 import { Asesoria } from '../models/asesoria.model';
 import { AutenticacionService } from './autenticacion.service';
+import { environment } from '../../environments/environment';
 
-
-// Gestión de asesorías entre usuarios y programadores en FS
-// Usuario solicita - Programador gestiona
+// Gestión de asesorías entre usuarios y programadores en el backend
 @Injectable({
   providedIn: 'root'
 })
 export class AsesoriasService {
 
-  private asesoriasCollection: CollectionReference<Asesoria>;
+  private apiUrl = `${environment.apiUrl}/asesorias`;
 
   constructor(
-    private firestore: Firestore, 
-    private authService: AutenticacionService 
-    ) {
-    // Inicializa la referencia a la colección 'asesorias' en Firestore
-    this.asesoriasCollection = collection(this.firestore, 'asesorias') as CollectionReference<Asesoria>;
+    private http: HttpClient,
+    private authService: AutenticacionService
+  ) { }
+
+  // CREAR una nueva solicitud de asesoría en el backend.
+  async addSolicitudAsesoria(solicitud: { programadorId: string; fecha: string; hora: string; comentario: string }): Promise<Asesoria> {
+    const user = await firstValueFrom(this.authService.getUsuarioActual());
+    if (!user) {
+      throw new Error('Debes iniciar sesión para solicitar una asesoría.');
+    }
+
+    // Convertir fecha y hora a formato que el backend espera (YYYY-MM-DDTHH:MM:SS)
+    const fechaHoraISO = `${solicitud.fecha}T${solicitud.hora}:00`; // Sin .toISOString() para evitar la 'Z'
+
+    const nuevaAsesoria: Partial<Asesoria> = {
+      id: crypto.randomUUID(), // Generar un ID único en el frontend.
+      fecha: fechaHoraISO,
+      comentario: solicitud.comentario,
+      solicitanteNombre: user.displayName!,
+      estado: 'pendiente'
+    };
+
+    // Los IDs se envían como QueryParams, como requiere el backend para la validación.
+    const params = new HttpParams()
+      .set('solicitanteId', user.uid)
+      .set('programadorId', solicitud.programadorId);
+
+    return firstValueFrom(this.http.post<Asesoria>(this.apiUrl, nuevaAsesoria, { params }));
   }
 
-
-  // CREAR() una nueva solicitud de asesoría FS
-  addSolicitudAsesoria(solicitud: { programadorId: string; fecha: string; hora: string; comentario: string }): Promise<void> {
-    return firstValueFrom(this.authService.getUsuarioActual().pipe(
-      switchMap(async user => {
-        if (!user) {
-          throw new Error('Debes iniciar sesión para solicitar una asesoría.');
-        }
-
-        const docRef = doc(this.asesoriasCollection);
-        
-        const nuevaAsesoria: Asesoria = {
-          id: docRef.id,
-          programadorId: solicitud.programadorId,
-          // Convierte la fecha y hora de string a Timestamp de FS
-          fecha: Timestamp.fromDate(new Date(`${solicitud.fecha}T${solicitud.hora}`)),
-          comentario: solicitud.comentario,
-          solicitanteId: user.uid,
-          solicitanteNombre: user.displayName,
-          estado: 'pendiente' 
-        };
-        
-        return setDoc(docRef, nuevaAsesoria);
-      })
-    ));
-  }
-
-
-  // OBTIENER() asesorías del programador autenticado
+  // OBTIENE las asesorías donde el usuario autenticado es el programador.
   getAsesorias(): Observable<Asesoria[]> {
     return this.authService.getUsuarioActual().pipe(
       switchMap(user => {
-        if (user) {
-          return this.getAsesoriasParaProgramador(user.uid);
-        } else {
-          return of([]); 
+        if (!user || user.role !== 'Programador') {
+          return of([]); // Solo los programadores pueden ver 'sus' asesorías por este método
         }
+        return this.getAsesoriasParaProgramador(user.uid);
       })
     );
   }
-  
 
-  //ACTUALIZAR() estado de una asesoría e incluye una respuesta del programador
-  updateEstadoAsesoria(asesoriaId: string, estado: 'aprobada' | 'rechazada' | 'finalizada', respuesta?: string): Promise<void> {
-    return firstValueFrom(this.authService.getUsuarioActual().pipe(
-      switchMap(async user => {
-        if (!user) {
-          throw new Error('Usuario no autenticado.');
-        }
+  // ACTUALIZA el estado de una asesoría e incluye una respuesta del programador.
+  async updateEstadoAsesoria(asesoriaId: string, estado: 'aprobada' | 'rechazada' | 'finalizada', respuesta?: string): Promise<Asesoria> {
+    const user = await firstValueFrom(this.authService.getUsuarioActual());
+    if (!user || user.role !== 'Programador') {
+      throw new Error('Permiso denegado. Solo un programador puede modificar el estado de una asesoría.');
+    }
 
-        const asesoriaDocRef = doc(this.asesoriasCollection, asesoriaId);
-        const docSnap = await getDoc(asesoriaDocRef);
+    // Obtener la asesoría existente para obtener solicitanteId y programadorId
+    const existingAsesoria = await firstValueFrom(this.getAsesoriaById(asesoriaId));
+    if (!existingAsesoria) {
+      throw new Error('Asesoría no encontrada.');
+    }
+    if (existingAsesoria.programador?.uid !== user.uid) { // Check if authenticated user is the programador
+      throw new Error('Permiso denegado. No puedes modificar esta asesoría.');
+    }
 
-        // Verifica que la asesoría exista y que el usuario autenticado sea el programador asociado
-        if (!docSnap.exists() || docSnap.data()['programadorId'] !== user.uid) {
-          throw new Error('Permiso denegado. No puedes modificar esta asesoría.');
-        }
-        
-        const updateData: Partial<Asesoria> = { estado };
-        if (respuesta) {
-          updateData.respuestaProgramador = respuesta;
-        }
-        
-        return updateDoc(asesoriaDocRef, updateData);
-      })
-    ));
+    const asesoriaToUpdate: Asesoria = {
+      ...existingAsesoria,
+      estado: estado,
+      respuestaProgramador: respuesta || existingAsesoria.respuestaProgramador // Actualiza o mantiene la respuesta
+    };
+
+    const params = new HttpParams()
+      .set('solicitanteId', existingAsesoria.solicitante?.uid || '') // Asumo que siempre habrá solicitante
+      .set('programadorId', existingAsesoria.programador?.uid || ''); // Asumo que siempre habrá programador
+
+    return await firstValueFrom(this.http.put<Asesoria>(this.apiUrl, asesoriaToUpdate, { params }));
   }
 
-
-  // OBTIENE() asesorías con el id del programador
+  // OBTIENE asesorías con el id del programador.
   getAsesoriasParaProgramador(programadorId: string): Observable<Asesoria[]> {
-    const q = query(this.asesoriasCollection, where('programadorId', '==', programadorId));
-    return collectionData(q, { idField: 'id' });
+    if (!programadorId) {
+      return of([]);
+    }
+    const params = new HttpParams().set('programadorId', programadorId);
+    return this.http.get<Asesoria[]>(this.apiUrl, { params });
   }
 
-
-  // OBTIENE() asesoria con el id del usuario solocitante 
+  // OBTIENE asesorías con el id del usuario solicitante.
   getAsesoriasDeSolicitante(solicitanteId: string): Observable<Asesoria[]> {
-    const q = query(this.asesoriasCollection, where('solicitanteId', '==', solicitanteId));
-    return collectionData(q, { idField: 'id' });
+    if (!solicitanteId) {
+      return of([]);
+    }
+    const params = new HttpParams().set('solicitanteId', solicitanteId);
+    return this.http.get<Asesoria[]>(this.apiUrl, { params });
   }
 
-  
+  // Método auxiliar para obtener una asesoría por ID (necesario para updateEstadoAsesoria)
+  private getAsesoriaById(id: string): Observable<Asesoria | null> {
+      return this.http.get<Asesoria>(`${this.apiUrl}/${id}`).pipe(
+        catchError(() => of(null))
+      );
+  }
+
+  // ELIMINA una asesoría por su ID.
+  async deleteAsesoria(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${this.apiUrl}/${id}`));
+  }
 }

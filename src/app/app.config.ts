@@ -8,14 +8,11 @@ import localeEs from '@angular/common/locales/es'; // Datos del locale español
 
 import { provideFirebaseApp, initializeApp } from "@angular/fire/app";
 import { provideAuth, getAuth } from '@angular/fire/auth';
-import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 
 // Registrar el locale español para que Angular pueda formatear fechas, monedas, etc. en español
 registerLocaleData(localeEs, 'es-ES');
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
+// Firebase config object (needed for initialization)
 const firebaseConfig = {
   apiKey: "AIzaSyAwclprMFEPkD6ILl-a3o89SM3gHbpcRds",
   authDomain: "portafolioweb-b3b64.firebaseapp.com",
@@ -25,7 +22,6 @@ const firebaseConfig = {
   appId: "1:307826675398:web:a38879555618747bf8d1c7"
 };
 
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
@@ -34,9 +30,8 @@ export const appConfig: ApplicationConfig = {
     // Proveer el LOCALE_ID para establecer 'es-ES' como el idioma por defecto de la aplicación
     { provide: LOCALE_ID, useValue: 'es-ES' },
 
-    //Configuración de Firebase
+    // Re-add Firebase providers for Auth ONLY
     provideFirebaseApp(() => initializeApp(firebaseConfig)),
     provideAuth(() => getAuth()),
-    provideFirestore(() => getFirestore()),
   ]
 };

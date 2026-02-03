@@ -105,7 +105,8 @@ export class Asesorias implements OnInit, OnDestroy {
       }
 
       // Si las prioridades son iguales, ordena por fecha (las más recientes primero)
-      return b.fecha.toMillis() - a.fecha.toMillis();
+      // Convertimos a Date para asegurar una comparación correcta si el formato ISO no es estricto, o comparamos directamente si es ISO
+      return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
     });
   }
 
@@ -124,9 +125,7 @@ export class Asesorias implements OnInit, OnDestroy {
         asesoria.estado = 'aprobada'; // Actualiza el estado localmente para reflejar el cambio en la UI
         
         // Log para simular el envío de un mensaje de WhatsApp
-        console.log(`Se enviará mensaje de confirmacion al whatsapp de ${asesoria.solicitanteNombre}`);
-
-        const notificacionKey = 'notificacion_asesoria_para_' + asesoria.solicitanteId;
+        const notificacionKey = 'notificacion_asesoria_para_' + asesoria.solicitante?.uid;
         this.notificationService.show('Asesoría aprobada', 'success'); // Muestra notificación de éxito
         localStorage.setItem(notificacionKey, 'Tu solicitud de asesoría ha sido APROBADA'); // Almacena notificación para el solicitante
       }
@@ -150,7 +149,7 @@ export class Asesorias implements OnInit, OnDestroy {
       const asesoria = this.allAsesorias.find(a => a.id === id); // Busca la asesoría en la lista local
       if (asesoria) {
         asesoria.estado = 'finalizada'; // Actualiza el estado localmente para reflejar el cambio en la UI
-        const notificacionKey = 'notificacion_asesoria_para_' + asesoria.solicitanteId;
+        const notificacionKey = 'notificacion_asesoria_para_' + asesoria.solicitante?.uid;
         this.notificationService.show('Asesoría marcada como finalizada', 'info'); // Muestra notificación de éxito
         localStorage.setItem(notificacionKey, 'Tu solicitud de asesoría ha sido FINALIZADA'); // Almacena notificación para el solicitante
       }
@@ -174,7 +173,7 @@ export class Asesorias implements OnInit, OnDestroy {
       const asesoria = this.allAsesorias.find(a => a.id === id); // Busca la asesoría en la lista local
       if (asesoria) {
         asesoria.estado = 'rechazada'; // Actualiza el estado localmente para reflejar el cambio en la UI
-        const notificacionKey = 'notificacion_asesoria_para_' + asesoria.solicitanteId;
+        const notificacionKey = 'notificacion_asesoria_para_' + asesoria.solicitante?.uid;
         this.notificationService.show('Asesoría rechazada', 'info'); // Muestra notificación de éxito
         localStorage.setItem(notificacionKey, 'Tu solicitud de asesoría ha sido RECHAZADA'); // Almacena notificación para el solicitante
       }

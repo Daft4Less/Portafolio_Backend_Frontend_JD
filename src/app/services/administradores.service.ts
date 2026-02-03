@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, collectionData, doc, updateDoc, deleteDoc, DocumentData, CollectionReference, getDoc } from '@angular/fire/firestore';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserProfile } from './autenticacion.service';
+import { environment } from '../../environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 
 // Gestion de usuarios administrativos
@@ -10,43 +12,38 @@ import { UserProfile } from './autenticacion.service';
 })
 export class AdministradoresService {
 
-  private usersCollection: CollectionReference<DocumentData>;
+  private apiUrl = `${environment.apiUrl}/usuarios`;
 
-  constructor(private firestore: Firestore) {
-    // Inicializa la referencia a la colección 'users' en FS
-    this.usersCollection = collection(this.firestore, 'users');
-  }
+  constructor(private http: HttpClient) { }
 
 
-
-  //OBTENCION() una lista de todos los perfiles de usuario. (UID incluido)
+  // OBTENCION() una lista de todos los perfiles de usuario. (UID incluido)
   getAllUsers(): Observable<UserProfile[]> {
-    return collectionData(this.usersCollection, { idField: 'uid' }) as Observable<UserProfile[]>;
+    return this.http.get<UserProfile[]>(this.apiUrl);
   }
 
 
   // EDITAR() usuario existente por UID
-  updateUserProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
-    const userDocRef = doc(this.firestore, `users/${uid}`);
-    return updateDoc(userDocRef, data);
+  async updateUserProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
+    // Primero, obtenemos el perfil completo del usuario para asegurar que enviamos una entidad válida.
+    const existingUser = await this.getUser(uid);
+
+    // Fusionamos los datos existentes con los nuevos cambios.
+    const updatedUser = { ...existingUser, ...data };
+
+    // Enviamos el objeto de usuario completo y actualizado al backend.
+    await firstValueFrom(this.http.put<void>(this.apiUrl, updatedUser));
   }
 
 
-  //ELIMINAR() un usuario por UID
-  deleteUser(uid: string): Promise<void> {
-    const userDocRef = doc(this.firestore, `users/${uid}`);
-    return deleteDoc(userDocRef);
+  // ELIMINAR() un usuario por UID
+  async deleteUser(uid: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${this.apiUrl}/${uid}`));
   }
 
 
   // OBTENER() el perfil de un usuario con UID
   async getUser(uid: string): Promise<UserProfile> {
-    const userDocRef = doc(this.firestore, `users/${uid}`);
-    const docSnap = await getDoc(userDocRef);
-    if (docSnap.exists()) {
-      return { uid: docSnap.id, ...docSnap.data() } as UserProfile;
-    } else {
-      throw new Error('User not found!');
-    }
+    return await firstValueFrom(this.http.get<UserProfile>(`${this.apiUrl}/${uid}`));
   }
 }
