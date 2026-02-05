@@ -5,6 +5,7 @@ import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+import java.time.LocalDateTime; // Importar LocalDateTime
 import java.util.List;
 
 @Stateless
@@ -52,5 +53,40 @@ public class AsesoriaDAO {
         TypedQuery<Asesoria> q = em.createQuery(jpql, Asesoria.class);
         q.setParameter("uid", programadorUid);
         return q.getResultList();
+    }
+    
+    // Nuevo método para el reporte de asesorías por programador, fecha y estado
+    public List<Asesoria> findAsesoriasByCriteria(String programadorUid, LocalDateTime fechaInicio, LocalDateTime fechaFin, String estado) {
+        StringBuilder jpql = new StringBuilder("SELECT a FROM Asesoria a WHERE 1=1");
+
+        if (programadorUid != null && !programadorUid.isEmpty()) {
+            jpql.append(" AND a.programador.uid = :programadorUid");
+        }
+        if (fechaInicio != null) {
+            jpql.append(" AND a.fecha >= :fechaInicio");
+        }
+        if (fechaFin != null) {
+            jpql.append(" AND a.fecha <= :fechaFin");
+        }
+        if (estado != null && !estado.isEmpty()) {
+            jpql.append(" AND a.estado = :estado");
+        }
+
+        TypedQuery<Asesoria> query = em.createQuery(jpql.toString(), Asesoria.class);
+
+        if (programadorUid != null && !programadorUid.isEmpty()) {
+            query.setParameter("programadorUid", programadorUid);
+        }
+        if (fechaInicio != null) {
+            query.setParameter("fechaInicio", fechaInicio);
+        }
+        if (fechaFin != null) {
+            query.setParameter("fechaFin", fechaFin);
+        }
+        if (estado != null && !estado.isEmpty()) {
+            query.setParameter("estado", estado);
+        }
+
+        return query.getResultList();
     }
 }

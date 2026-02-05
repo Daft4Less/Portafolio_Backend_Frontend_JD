@@ -1,0 +1,5 @@
+El archivo `response_to_user.txt` se encuentra en la raíz de tu directorio de trabajo actual:
+
+`C:\Users\Daniela\eclipse-workspace\portafolio\response_to_user.txt`
+
+Ahí podrás copiar el prompt completo para tu otra sesión de Gemini.
