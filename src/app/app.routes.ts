@@ -11,6 +11,8 @@ import { AdmProgramadores } from './admin/adm-programadores/adm-programadores';
 import { AdmUsuarios } from './admin/adm-usuarios/adm-usuarios';
 import { AdmAsesorias } from './admin/adm-asesorias/adm-asesorias';
 import { AdmDashboard } from './admin/adm-dashboard/adm-dashboard'; // Keep import for potential direct navigation
+import { ReporteAsesoriasComponent } from './admin/reporte-asesorias/reporte-asesorias';
+import { ReporteProyectosComponent } from './admin/reporte-proyectos/reporte-proyectos';
 
 // Guards
 import { AuthGuard } from './guards/auth.guard';
@@ -48,7 +50,9 @@ export const routes: Routes = [
             { path: 'adm-programadores', component: AdmProgramadores },
             { path: 'adm-usuarios', component: AdmUsuarios },
             { path: 'adm-asesorias', component: AdmAsesorias },
-            { path: 'dashboard', component: AdmDashboard } // Keep dashboard accessible if explicitly navigated
+            { path: 'dashboard', component: AdmDashboard }, // Keep dashboard accessible if explicitly navigated
+            { path: 'reporte-asesorias', component: ReporteAsesoriasComponent },
+            { path: 'reporte-proyectos', component: ReporteProyectosComponent }
         ]
     },
     { path: '**', redirectTo: '/login' } // Redirect any other unknown path to login

@@ -1,0 +1,237 @@
+:host {
+  // Variables CSS (pueden ser globales o se pueden importar si el proyecto usa algo como SASS vars)
+  --admin-bg-color: #f8f9fa;
+  --card-bg-color: #ffffff;
+  --text-color: #212529;
+  --text-muted-color: #6c757d;
+  --border-color: #dee2e6;
+  --primary-color: #0d6efd;
+  --success-color: #198754;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #0dcaf0;
+}
+
+.admin-page {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: var(--admin-bg-color);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); // Añadir una sombra sutil a la página
+  border-radius: 8px; // Bordes redondeados para la página
+}
+
+h2 {
+  color: var(--text-color);
+  text-align: center;
+  margin-bottom: 1.5rem; // Espaciado ajustado
+  font-size: 2rem; // Tamaño de fuente ajustado
+}
+
+.descripcion {
+  text-align: center;
+  color: var(--text-muted-color);
+  margin-bottom: 3rem;
+  font-size: 1.1rem;
+}
+
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem; // Espacio entre los contenedores de tabla/tarjeta
+}
+
+.table-container {
+  background-color: var(--card-bg-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  overflow-x: auto; // For responsiveness
+  position: relative; // Added for absolute positioning of children
+
+  .pdf-summary-button-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+  }
+
+  h3 {
+    text-align: left;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+  }
+
+  h4 {
+    font-size: 1.2rem;
+    color: var(--text-color);
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* --- Formulario y Controles --- */
+.form-label {
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.form-select,
+.form-control {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  &:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    outline: none;
+  }
+}
+
+/* --- Table Styles (similar a admin-table) --- */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px; // Ayuda con el desplazamiento horizontal en pantallas pequeñas
+
+  thead tr {
+    border-bottom: 2px solid var(--border-color);
+  }
+
+  th {
+    text-align: left;
+    padding: 1rem;
+    color: var(--text-muted-color);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  td {
+    padding: 1rem;
+    vertical-align: middle;
+    color: var(--text-color);
+    word-break: break-word; // Permite que el texto largo se envuelva
+  }
+}
+
+.acciones {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  .btn-accion {
+    padding: 0.5rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap; // Evita que el texto del botón se rompa
+
+    background-color: var(--info-color); // Default to info color
+    color: #fff; // Default text color
+
+    &:hover { background-color: #0a98b5; } // Default hover for info
+
+    &.btn-primary {
+      background-color: var(--primary-color);
+      color: #fff;
+      &:hover { background-color: #0b5ed7; }
+    }
+    &.btn-success {
+      background-color: var(--success-color);
+      color: #fff;
+      &:hover { background-color: #146c43; }
+    }
+    &.btn-warning {
+      background-color: var(--warning-color);
+      color: #000;
+      &:hover { background-color: #ffca2c; }
+    }
+    &.btn-danger {
+        background-color: var(--danger-color);
+        color: #fff;
+        &:hover { background-color: #a71d2a; }
+    }
+  }
+}
+
+/* --- Botón de Descarga General --- */
+.btn-descarga-general {
+  padding: 0.8rem 1.5rem;
+  background-color: var(--danger-color); // Usar el color danger
+  color: #fff; // Texto blanco
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; // Espacio entre icono y texto
+
+  &:hover {
+    background-color: #a71d2a; // Un tono más oscuro para el hover de danger
+    transform: translateY(-2px);
+  }
+
+  i {
+    margin-right: 0; // El gap manejará el espacio
+  }
+}
+
+
+.mensaje-lista {
+  text-align: center;
+  color: var(--text-muted-color);
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .admin-page {
+    padding: 1rem;
+    margin: 1rem auto;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+
+  .descripcion {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .table-container {
+    padding: 1rem;
+  }
+
+  .row.g-3 > div {
+    margin-bottom: 1rem; // Espacio entre elementos en filas responsivas
+  }
+
+  .acciones {
+    flex-direction: column; // Botones de acción apilados en móvil
+    gap: 0.25rem;
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,79 @@
+<div class="container-fluid mt-3">
+  <h2>Reporte de Asesorías</h2>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      Filtros de Búsqueda
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="generarReporte()">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label for="programadorId" class="form-label">ID Programador:</label>
+            <input type="text" class="form-control" id="programadorId" [(ngModel)]="programadorId" name="programadorId">
+          </div>
+          <div class="col-md-4">
+            <label for="fechaInicio" class="form-label">Fecha Inicio:</label>
+            <input type="datetime-local" class="form-control" id="fechaInicio" [(ngModel)]="fechaInicio" name="fechaInicio">
+          </div>
+          <div class="col-md-4">
+            <label for="fechaFin" class="form-label">Fecha Fin:</label>
+            <input type="datetime-local" class="form-control" id="fechaFin" [(ngModel)]="fechaFin" name="fechaFin">
+          </div>
+          <div class="col-md-4">
+            <label for="estado" class="form-label">Estado:</label>
+            <select class="form-select" id="estado" [(ngModel)]="estado" name="estado">
+              <option value="">Todos</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="aprobada">Aprobada</option>
+              <option value="finalizada">Finalizada</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary me-2">Generar Reporte</button>
+            <button type="button" class="btn btn-success" (click)="descargarPDF()" [disabled]="asesorias.length === 0">Descargar PDF</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card" *ngIf="asesorias.length > 0">
+    <div class="card-header">
+      Resultados del Reporte ({{ asesorias.length }} asesorías)
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Solicitante</th>
+              <th scope="col">Programador</th>
+              <th scope="col">Fecha</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Comentario</th>
+              <th scope="col">Respuesta Programador</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let asesoria of asesorias">
+              <td>{{ asesoria.id }}</td>
+              <td>{{ asesoria.solicitante?.displayName || 'N/A' }}</td>
+              <td>{{ asesoria.programador?.displayName || 'N/A' }}</td>
+              <td>{{ asesoria.fecha | date:'medium' }}</td>
+              <td>{{ asesoria.estado }}</td>
+              <td>{{ asesoria.comentario }}</td>
+              <td>{{ asesoria.respuestaProgramador || 'N/A' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info mt-3" role="alert" *ngIf="asesorias.length === 0">
+    No hay resultados para los filtros seleccionados.
+  </div>
+</div>
+
